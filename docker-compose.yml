@@ -4,13 +4,13 @@ services:
       context: .
       network: host
     ports:
-      - "8080:8080"
+      - "8081:8081"
     environment:
       OLLAMA_URL: http://ollama:11434
       DATABASE_PATH: /app/data/voice.db
       UPLOADS_DIR: /app/uploads
       WHISPER_MODEL: /app/models/ggml-large-v3.bin
-      SERVER_PORT: 8080
+      SERVER_PORT: 8081
       OLLAMA_MODEL: llama3.2:3b
     env_file:
       - .env
