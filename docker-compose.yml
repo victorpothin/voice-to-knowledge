@@ -1,0 +1,35 @@
+services:
+  api:
+    build:
+      context: .
+      network: host
+    ports:
+      - "8080:8080"
+    environment:
+      OLLAMA_URL: http://ollama:11434
+      DATABASE_PATH: /app/data/voice.db
+      UPLOADS_DIR: /app/uploads
+      WHISPER_MODEL: /app/models/ggml-large-v3.bin
+      SERVER_PORT: 8080
+      OLLAMA_MODEL: llama3.2:3b
+    env_file:
+      - .env
+    volumes:
+      - api_data:/app/data
+      - api_uploads:/app/uploads
+      - api_models:/app/models
+    depends_on:
+      - ollama
+
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+
+volumes:
+  api_data:
+  api_uploads:
+  api_models:
+  ollama_models:
