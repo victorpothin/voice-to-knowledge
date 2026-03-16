@@ -5,7 +5,7 @@ mod transcricoes;
 use std::path::PathBuf;
 
 pub use audio::post_audio;
-pub use sync::{post_sync, SyncResponse};
+pub use sync::post_sync;
 pub use transcricoes::get_transcriptions;
 
 #[derive(Clone)]
@@ -24,9 +24,12 @@ pub struct AppState {
 }
 
 pub fn router(state: AppState) -> axum::Router {
+    use axum::extract::DefaultBodyLimit;
+
     axum::Router::new()
         .route("/audio", axum::routing::post(post_audio))
         .route("/transcriptions", axum::routing::get(get_transcriptions))
         .route("/sync", axum::routing::post(post_sync))
+        .layer(DefaultBodyLimit::max(state.max_upload_bytes as usize))
         .with_state(state)
 }

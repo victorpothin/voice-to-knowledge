@@ -2,6 +2,7 @@ use crate::error::AppError;
 use crate::models::AudioAcceptedResponse;
 use crate::services::transcrever;
 use axum::extract::State;
+use axum::http::HeaderMap;
 use axum::response::IntoResponse;
 use axum_extra::extract::Multipart;
 use reqwest::Client;
@@ -17,16 +18,30 @@ use super::AppState;
 
 pub async fn post_audio(
     State(state): State<AppState>,
+    headers: HeaderMap,
     mut multipart: Multipart,
 ) -> Result<axum::response::Response, AppError> {
+    // Log content-type for debugging
+    let content_type = headers
+        .get("content-type")
+        .map(|v| v.to_str().unwrap_or("<invalid>"))
+        .unwrap_or("<missing>");
+    tracing::debug!("POST /audio - Content-Type: {}", content_type);
+
     let mut device_id: Option<String> = None;
     let mut file_data: Option<(Vec<u8>, String)> = None;
 
-    while let Some(field) = multipart.next_field().await.map_err(|e| AppError::Multipart(e.to_string()))? {
+    while let Some(field) = multipart.next_field().await.map_err(|e| {
+        tracing::error!("Multipart parsing error: {}", e);
+        AppError::Multipart(format!("Error parsing multipart form: {}", e))
+    })? {
         let name = field.name().unwrap_or("").to_string();
+        tracing::debug!("Processing field: {}", name);
+        
         if name == "device_id" {
             let bytes = field.bytes().await.map_err(|e| AppError::Multipart(e.to_string()))?;
             device_id = Some(String::from_utf8_lossy(&bytes).trim().to_string());
+            tracing::debug!("device_id: {:?}", device_id);
         } else if name == "file" {
             let filename = field
                 .file_name()
@@ -52,6 +67,7 @@ pub async fn post_audio(
                 )));
             }
             file_data = Some((bytes.to_vec(), ext));
+            tracing::debug!("file: {} ({} bytes)", filename, bytes.len());
         }
     }
 

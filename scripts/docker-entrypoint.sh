@@ -7,4 +7,14 @@ if [ ! -f "$DB_PATH" ]; then
   sqlite3 "$DB_PATH" < /app/migrations/001_initial.sql
 fi
 
+# Download Whisper model if not present
+if [ ! -f "${WHISPER_MODEL:-/app/models/ggml-large-v3.bin}" ]; then
+  echo "Downloading Whisper model..."
+  mkdir -p "$(dirname "${WHISPER_MODEL:-/app/models/ggml-large-v3.bin}")"
+  cd "$(dirname "${WHISPER_MODEL:-/app/models/ggml-large-v3.bin}")"
+  curl -L -J -o "$(basename "${WHISPER_MODEL:-/app/models/ggml-large-v3.bin}")" "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin"
+  cd - > /dev/null
+  echo "Model downloaded."
+fi
+
 exec /app/voice-to-knowledge
