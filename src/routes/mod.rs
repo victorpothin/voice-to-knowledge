@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 pub use audio::post_audio;
 pub use sync::{post_sync, SyncResponse};
-pub use transcricoes::get_transcricoes;
+pub use transcricoes::get_transcriptions;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -26,7 +26,7 @@ pub struct AppState {
 pub fn router(state: AppState) -> axum::Router {
     axum::Router::new()
         .route("/audio", axum::routing::post(post_audio))
-        .route("/transcricoes", axum::routing::get(get_transcricoes))
+        .route("/transcriptions", axum::routing::get(get_transcriptions))
         .route("/sync", axum::routing::post(post_sync))
         .with_state(state)
 }

@@ -1,26 +1,26 @@
 use crate::error::AppError;
-use crate::models::Transcricao;
+use crate::models::Transcription;
 use reqwest::Client;
 use std::fmt::Write;
 
-/// Build .txt content from transcriptions: one treated text per block, separated by "---".
-pub fn build_transcricoes_txt(transcricoes: &[Transcricao]) -> String {
+/// Build .txt content from transcriptions: one processed text per block, separated by "---".
+pub fn build_transcriptions_txt(transcriptions: &[Transcription]) -> String {
     let mut out = String::new();
-    for (i, t) in transcricoes.iter().enumerate() {
+    for (i, t) in transcriptions.iter().enumerate() {
         if i > 0 {
             let _ = writeln!(out, "---");
         }
-        if let Some(ref tratada) = t.tratada {
-            let _ = write!(out, "{}", tratada);
+        if let Some(ref processed) = t.processed_text {
+            let _ = write!(out, "{}", processed);
         }
     }
     out
 }
 
-/// Filename for sync file: transcricoes_YYYY-MM-DD.txt
+/// Filename for sync file: transcriptions_YYYY-MM-DD.txt
 pub fn sync_filename() -> String {
     let now = chrono::Utc::now();
-    format!("transcricoes_{}.txt", now.format("%Y-%m-%d"))
+    format!("transcriptions_{}.txt", now.format("%Y-%m-%d"))
 }
 
 /// Upload content to Google Drive using OAuth2.

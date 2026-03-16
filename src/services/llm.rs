@@ -3,11 +3,11 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
-const SYSTEM_PROMPT: &str = r#"Você é um editor de texto. Receba uma transcrição de áudio em português e:
-1. Remova vícios de linguagem (então, né, tipo, é...)
-2. Corrija pontuação e capitalização
-3. Mantenha o significado original intacto
-4. Responda APENAS com o texto corrigido, sem comentários"#;
+const SYSTEM_PROMPT: &str = r#"You are a text editor. Receive an audio transcription in Portuguese and:
+1. Remove filler words (um, uh, like, you know, so, well...)
+2. Fix punctuation and capitalization
+3. Keep the original meaning intact
+4. Respond ONLY with the corrected text, no comments"#;
 
 #[derive(Serialize)]
 struct ChatRequest {
@@ -32,7 +32,7 @@ struct MessageContent {
     content: String,
 }
 
-/// Call Ollama to clean/format the raw transcription. On failure returns Err so caller can save raw and set status 'sem_tratamento'.
+/// Call Ollama to clean/format the raw transcription. On failure returns Err so caller can save raw and set status 'unprocessed'.
 pub async fn limpar_texto(
     client: &Client,
     base_url: &str,

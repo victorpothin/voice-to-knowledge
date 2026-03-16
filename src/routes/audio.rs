@@ -39,7 +39,7 @@ pub async fn post_audio(
                 .unwrap_or_default();
             if !ALLOWED_EXTENSIONS.contains(&ext.as_str()) {
                 return Err(AppError::Validation(format!(
-                    "Extensão não permitida. Use: {}",
+                    "Unsupported file extension. Allowed: {}",
                     ALLOWED_EXTENSIONS.join(", ")
                 )));
             }
@@ -47,7 +47,7 @@ pub async fn post_audio(
             let max = state.max_upload_bytes;
             if bytes.len() as u64 > max {
                 return Err(AppError::Validation(format!(
-                    "Arquivo maior que o limite ({} bytes)",
+                    "File exceeds limit ({} bytes)",
                     max
                 )));
             }
@@ -75,16 +75,16 @@ pub async fn post_audio(
 
     let row_id = tokio::task::spawn_blocking(move || {
         let conn = crate::db::open(&db_path)?;
-        crate::db::insert_pendente(&conn, &device_id, &path_str)
+        crate::db::insert_pending(&conn, &device_id, &path_str)
     })
     .await
     .map_err(|e| AppError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))??;
 
-    let criado_em = tokio::task::spawn_blocking({
+    let created_at = tokio::task::spawn_blocking({
         let db_path = state.db_path.clone();
         move || {
             let conn = crate::db::open(&db_path)?;
-            crate::db::get_criado_em(&conn, row_id)
+            crate::db::get_created_at(&conn, row_id)
         }
     })
     .await
@@ -112,8 +112,8 @@ pub async fn post_audio(
 
     let body = AudioAcceptedResponse {
         id: row_id,
-        status: "pendente".to_string(),
-        criado_em,
+        status: "pending".to_string(),
+        created_at,
     };
     Ok((
         axum::http::StatusCode::ACCEPTED,
@@ -133,7 +133,7 @@ async fn run_pipeline(
 ) {
     tracing::info!(id, "starting background pipeline");
 
-    let bruta = match transcrever("", whisper_model, &audio_path).await {
+    let raw_text = match transcrever("", whisper_model, &audio_path).await {
         Ok(t) => t,
         Err(e) => {
             tracing::error!(id, "whisper failed: {}", e);
@@ -147,9 +147,9 @@ async fn run_pipeline(
                     let _ = crate::db::update_processed(
                         &conn,
                         id,
-                        "(erro na transcrição)",
+                        "(transcription error)",
                         None,
-                        "erro",
+                        "error",
                     );
                 }
             })
@@ -158,11 +158,11 @@ async fn run_pipeline(
         }
     };
 
-    let tratada = match crate::services::limpar_texto(
+    let processed_text = match crate::services::limpar_texto(
         &Client::new(),
         ollama_url,
         ollama_model,
-        &bruta,
+        &raw_text,
     )
     .await
     {
@@ -170,7 +170,7 @@ async fn run_pipeline(
         Err(e) => {
             tracing::warn!(id, "ollama failed, saving raw only: {}", e);
             let db_path2 = db_path.clone();
-            let bruta_clone = bruta.clone();
+            let raw_text_clone = raw_text.clone();
             let _ = tokio::task::spawn_blocking(move || {
                 let conn = match crate::db::open(&db_path2) {
                     Ok(c) => c,
@@ -179,9 +179,9 @@ async fn run_pipeline(
                 let _ = crate::db::update_processed(
                     &conn,
                     id,
-                    &bruta_clone,
+                    &raw_text_clone,
                     None,
-                    "sem_tratamento",
+                    "unprocessed",
                 );
             })
             .await;
@@ -190,7 +190,7 @@ async fn run_pipeline(
     };
 
     let db_path2 = db_path.clone();
-    let bruta_f = bruta.clone();
+    let raw_text_f = raw_text.clone();
     let _ = tokio::task::spawn_blocking(move || {
         let conn = match crate::db::open(&db_path2) {
             Ok(c) => c,
@@ -199,9 +199,9 @@ async fn run_pipeline(
         if let Err(e) = crate::db::update_processed(
             &conn,
             id,
-            &bruta_f,
-            Some(&tratada),
-            "processado",
+            &raw_text_f,
+            Some(&processed_text),
+            "processed",
         ) {
             tracing::error!(id, "db update failed: {}", e);
         }

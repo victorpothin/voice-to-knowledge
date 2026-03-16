@@ -2,7 +2,7 @@ mod queries;
 mod schema;
 
 pub use queries::{
-    get_criado_em, insert_pendente, list, list_nao_sincronizadas, mark_sincronizado,
+    get_created_at, insert_pending, list, list_unsynced, mark_synced,
     open, update_processed,
 };
-pub use schema::TABLE_TRANSCRICOES;
+pub use schema::TABLE_TRANSCRIPTIONS;

@@ -3,39 +3,39 @@ use serde::{Deserialize, Serialize};
 
 /// Row from DB (snake_case for rusqlite).
 #[derive(Debug, Clone)]
-pub struct Transcricao {
+pub struct Transcription {
     pub id: i64,
     pub device_id: String,
     pub audio_path: Option<String>,
-    pub bruta: String,
-    pub tratada: Option<String>,
-    pub duracao_seg: Option<f64>,
+    pub raw_text: String,
+    pub processed_text: Option<String>,
+    pub duration_sec: Option<f64>,
     pub status: String,
-    pub criado_em: String,
-    pub atualizado_em: String,
-    pub sincronizado: i32,
-    pub arquivado: i32,
+    pub created_at: String,
+    pub updated_at: String,
+    pub synced: i32,
+    pub archived: i32,
 }
 
 /// API response for a single transcription.
 #[derive(Debug, Serialize)]
-pub struct TranscricaoResponse {
+pub struct TranscriptionResponse {
     pub id: i64,
-    #[serde(rename = "transcricao_bruta")]
-    pub bruta: String,
-    #[serde(rename = "transcricao_tratada")]
-    pub tratada: Option<String>,
-    pub criado_em: String,
+    #[serde(rename = "raw_text")]
+    pub raw_text: String,
+    #[serde(rename = "processed_text")]
+    pub processed_text: Option<String>,
+    pub created_at: String,
     pub status: String,
 }
 
-impl From<Transcricao> for TranscricaoResponse {
-    fn from(t: Transcricao) -> Self {
-        TranscricaoResponse {
+impl From<Transcription> for TranscriptionResponse {
+    fn from(t: Transcription) -> Self {
+        TranscriptionResponse {
             id: t.id,
-            bruta: t.bruta,
-            tratada: t.tratada,
-            criado_em: t.criado_em,
+            raw_text: t.raw_text,
+            processed_text: t.processed_text,
+            created_at: t.created_at,
             status: t.status,
         }
     }
@@ -46,12 +46,12 @@ impl From<Transcricao> for TranscricaoResponse {
 pub struct AudioAcceptedResponse {
     pub id: i64,
     pub status: String,
-    pub criado_em: String,
+    pub created_at: String,
 }
 
-/// Query params for GET /transcricoes.
+/// Query params for GET /transcriptions.
 #[derive(Debug, Default, Deserialize)]
-pub struct TranscricoesQuery {
+pub struct TranscriptionsQuery {
     pub limit: Option<u32>,
     pub offset: Option<u32>,
     pub status: Option<String>,
