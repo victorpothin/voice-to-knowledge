@@ -8,11 +8,11 @@ if [ ! -f "$DB_PATH" ]; then
 fi
 
 # Download Whisper model if not present
-if [ ! -f "${WHISPER_MODEL:-/app/models/ggml-large-v3.bin}" ]; then
+if [ ! -f "${WHISPER_MODEL:-/app/models/ggml-small.bin}" ]; then
   echo "Downloading Whisper model..."
-  mkdir -p "$(dirname "${WHISPER_MODEL:-/app/models/ggml-large-v3.bin}")"
-  cd "$(dirname "${WHISPER_MODEL:-/app/models/ggml-large-v3.bin}")"
-  curl -L -J -o "$(basename "${WHISPER_MODEL:-/app/models/ggml-large-v3.bin}")" "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin"
+  mkdir -p "$(dirname "${WHISPER_MODEL:-/app/models/ggml-small.bin}")"
+  cd "$(dirname "${WHISPER_MODEL:-/app/models/ggml-small.bin}")"
+  curl -L -J -o "$(basename "${WHISPER_MODEL:-/app/models/ggml-small.bin}")" "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin"
   cd - > /dev/null
   echo "Model downloaded."
 fi

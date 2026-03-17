@@ -9,7 +9,7 @@ services:
       OLLAMA_URL: http://ollama:11434
       DATABASE_PATH: /app/data/voice.db
       UPLOADS_DIR: /app/uploads
-      WHISPER_MODEL: /app/models/ggml-large-v3.bin
+      WHISPER_MODEL: /app/models/ggml-small.bin
       SERVER_PORT: 8081
       OLLAMA_MODEL: llama3.2:3b
     env_file:
@@ -19,14 +19,32 @@ services:
       - api_uploads:/app/uploads
       - api_models:/app/models
     depends_on:
-      - ollama
+      ollama:
+        condition: service_healthy
 
   ollama:
-    image: ollama/ollama
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
     ports:
       - "11434:11434"
     volumes:
       - ollama_models:/root/.ollama
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:11434/api/tags" ]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    entrypoint: [ "/bin/sh", "-c" ]
+    command:
+      - |
+        /bin/ollama serve &
+        sleep 5
+        echo "Pulling llama3.2:3b model..."
+        /bin/ollama pull llama3.2:3b
+        echo "Model pulled successfully. Waiting for API requests..."
+        wait
 
 volumes:
   api_data:
